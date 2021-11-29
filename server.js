@@ -16,11 +16,6 @@ const db = knex({
     }
 });
 
-// db.select('*').from('users').then(data => {
-//     console.log(data)
-// })
-
-
 app.use(express.json())
 app.use(cors())
 
@@ -57,13 +52,6 @@ app.get("/", (req,res) => {
 })
 
 app.post("/signin", (req,res) => {
-    // Load hash from your password DB.
-    // bcrypt.compare("apples", "$2a$10$/.0cer/WAEGzLNV/gVLHluFeo1B4aJ2zX8Pr4Xjp/R81/KDEOfLjK", function(err, res) {
-    //     console.log("1st guess", res)
-    // });
-    // bcrypt.compare("veggies", "$2a$10$/.0cer/WAEGzLNV/gVLHluFeo1B4aJ2zX8Pr4Xjp/R81/KDEOfLjK", function(err, res) {
-    //     console.log("2nd guess", res)
-    // });
     if (req.body.email === database.users[0].email &&
         req.body.password === database.users[0].password){
             res.json(database.users[0])
@@ -75,17 +63,16 @@ app.post("/signin", (req,res) => {
 
 app.post("/register", (req,res) => {
     const {email, name, password} = req.body
-    // bcrypt.hash(password, null, null, function(err, hash) {
-    //     // Store hash in your password DB.
-    //     console.log(hash)
-    // });
-
-    db('users').insert({
+    db('users')
+    .returning('*')
+    .insert({
         email: email,
         name: name,
         joined: new Date()
-    }).then(console.log)
-    res.json(database.users[database.users.length-1])
+    }).then(user => {
+        res.json(user[0])
+    })
+    .catch(err => res.status(400).json("unable to register"))
 })
 
 app.get("/profile/:id", (req,res) => {
