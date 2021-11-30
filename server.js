@@ -66,7 +66,8 @@ app.post("/register", (req,res) => {
     if (!email || !name || !password) {
         return res.status(400).json('incorrect form submission');
     }
-    db('users')
+    const hash = bcrypt.hashSync(password)
+    return db('users')
     .returning('*')
     .insert({
         email: email,
