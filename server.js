@@ -63,6 +63,9 @@ app.post("/signin", (req,res) => {
 
 app.post("/register", (req,res) => {
     const {email, name, password} = req.body
+    if (!email || !name || !password) {
+        return res.status(400).json('incorrect form submission');
+    }
     db('users')
     .returning('*')
     .insert({
@@ -77,27 +80,22 @@ app.post("/register", (req,res) => {
 
 app.get("/profile/:id", (req,res) => {
     const {id} = req.params;
-    let found = false
-    database.users.forEach(x => {
-        if (user.id === id){
-            found = true
-            return res.json(user)
-        }
+    db.select('*').from('users').where({
+        id: id
+    }).then(user => {
+        if (user.length > 0) res.json(user[0])
+        else res.status(400).json("not found")
     })
-    if (!found) res.status(404).json("Not Found, Daaaaaaaamn!")
+    .catch(err=> res.status(400).json("error getting user"))
 })
 
 app.put("/image", (req,res) => {
     const {id} = req.body;
-    let found = false
-    database.users.forEach(user => {
-        if (user.id === id){
-            found = true
-            user.entries++
-            return res.json(user.entries)
-        }
-    })
-    if (!found) res.status(400).json("Not Found")
+    db('users').where('id','=',id)
+    .increment('entries',1)
+    .returning('entries')
+    .then(entries => res.json(entries[0]))
+    .catch(err => res.status(400).json("unable to get image count"))
 })
 
 
