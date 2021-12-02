@@ -19,46 +19,55 @@ const db = knex({
 app.use(express.json())
 app.use(cors())
 
-const database = {
-    users : [
-        {
-            id: "123",
-            name: "John",
-            email: "1",
-            password: "1",
-            entries: 0,
-            joined: new Date()
-        },
-        {
-            id: "124",
-            name: "Sally",
-            email: "sally@gmail.com",
-            password: "bananas",
-            entries: 0,
-            joined: new Date()
-        }
-    ],
-    // login: [
-    //     {
-    //         id: "987",
-    //         email: "john@gmail.com",
-    //         hash : ""
-    //     }
-    // ]
-}
+// const database = {
+//     users : [
+//         {
+//             id: "123",
+//             name: "John",
+//             email: "john@gmail.com",
+//             password: "cookies",
+//             entries: 0,
+//             joined: new Date()
+//         },
+//         {
+//             id: "124",
+//             name: "Sally",
+//             email: "sally@gmail.com",
+//             password: "bananas",
+//             entries: 0,
+//             joined: new Date()
+//         }
+//     ],
+//     login: [
+//         {
+//             id: "123",
+//             email: "john@gmail.com",
+//             hash : ""
+//         }
+//     ]
+// }
 
 app.get("/", (req,res) => {
-    res.send(database.users)
+    res.send('success')
 })
 
 app.post("/signin", (req,res) => {
-    if (req.body.email === database.users[0].email &&
-        req.body.password === database.users[0].password){
-            res.json(database.users[0])
-    }
-    else{
-        res.status(400).json("Error Logging In")
-    }
+    const { email, password } = req.body;
+    db.select('email', 'hash').from('login')
+    .where('email', '=', email)
+    .then(data => {
+        const isValid = bcrypt.compareSync(password, data[0].hash)
+        if(isValid){
+            return db.select('*').from('users')
+            .where('email', '=', email)
+            .then(user => {
+                res.json(user[0])
+            })
+            .catch(err=> res.status(400).json("unable to get user"))
+        }
+        else res.status(400).json("wrong credentials")
+    })
+    .catch(err => res.status(400).json("wrong credentials"))
 })
 
 app.post("/register", (req,res) => {
@@ -88,7 +97,6 @@ app.post("/register", (req,res) => {
         .then(trx.commit)
         .catch(trx.rollback)
     })
-    
     .catch(err => res.status(400).json("unable to register"))
 })
 
